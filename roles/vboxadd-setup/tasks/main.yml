@@ -1,7 +1,7 @@
 ---
 
 # 最新のカーネル用を取得する
-- yum: name=kernel-devel
+- yum: name=kernel-devel state=latest
 - yum: name=gcc
 - yum: name=dkms
 

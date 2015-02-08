@@ -1,0 +1,11 @@
+---
+
+# 最新のカーネル用を取得する
+- yum: name=kernel-devel
+- yum: name=gcc
+- yum: name=dkms
+
+# 現在のカーネル用を取得する
+- yum: name="kernel-devel-{{ ansible_kernel }}"
+
+- command: /etc/init.d/vboxadd setup

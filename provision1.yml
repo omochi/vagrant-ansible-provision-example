@@ -1,0 +1,8 @@
+---
+- hosts: all
+  sudo: yes
+  roles:
+    - selinux-disable
+    - epel
+    - yum-update
+    - vboxadd-setup

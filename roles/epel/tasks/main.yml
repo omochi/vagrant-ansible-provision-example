@@ -1,0 +1,5 @@
+---
+
+- copy: src=epel-release.rpm dest=/usr/local/src
+- yum: name=/usr/local/src/epel-release.rpm
+

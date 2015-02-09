@@ -153,20 +153,33 @@ VirtualBoxの更新時は[こちら](http://download.virtualbox.org/virtualbox/)
 
 dkmsでインストールしたモジュールを確認すると、
 installedとinstalled-weakという状態があります。
-
-状態は下記コマンドで確認ができます。
-なお、下記の出力例はこのprovisionが全て完了した後のものです。
-
-~~~
-[vagrant@localhost ~]$ sudo dkms status
-vboxguest, 4.3.14, 3.10.0-123.20.1.el7.x86_64, x86_64: installed
-vboxguest, 4.3.14, 3.10.0-123.el7.x86_64, x86_64: installed-weak from 3.10.0-123.20.1.el7.x86_64
-~~~
-
-現在起動しているカーネル用にビルドしたものがinstalled、
+起動しているバージョンとターゲットバージョンが一致しているビルドがinstalled、
 そうでないものがinstalled-weakとなるようです。
 
-利用している環境の方がinstalledとなっているほうが綺麗だと思うので、
+下記は、カーネルを`3.10.0-123.el7.x86_64`で起動している際、
+そのバージョンと最新の`3.10.0-123.20.1.el7.x86_64`向けにビルドした状態です。
+
+~~~
+[vagrant@localhost ~]$ uname -r
+3.10.0-123.el7.x86_64
+[vagrant@localhost ~]$ sudo dkms status
+vboxguest, 4.3.20, 3.10.0-123.el7.x86_64, x86_64: installed
+vboxguest, 4.3.20, 3.10.0-123.20.1.el7.x86_64, x86_64: installed-weak from 3.10.0-123.el7.x86_64
+~~~
+
+その後再起動し、カーネルが`3.10.0-123.20.1.el7.x86_64`で起動した状態を下記に示します。
+
+~~~
+[vagrant@localhost ~]$ uname -r
+3.10.0-123.20.1.el7.x86_64
+[vagrant@localhost ~]$ sudo dkms status
+vboxguest, 4.3.20, 3.10.0-123.el7.x86_64, x86_64: installed
+vboxguest, 4.3.20, 3.10.0-123.20.1.el7.x86_64, x86_64: installed-weak from 3.10.0-123.el7.x86_64
+~~~
+
+カーネルは更新されていますが、モジュールはinstalled-weakのままです。
+
+利用しているモジュールがinstalledであるのが好ましい気がするので、
 provision2ではそれを更新するために再度リビルドしています。
 
 その後、モジュールを読み込み直すために再度再起動をします。

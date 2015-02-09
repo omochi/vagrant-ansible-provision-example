@@ -2,4 +2,5 @@
 - hosts: all
   sudo: yes
   roles:
-    - vboxadd-setup
+    - { role: vboxguest, tags: ['vboxguest'] }
+

@@ -1,0 +1,20 @@
+---
+
+# 最新のカーネル用を取得する
+- yum: name=kernel-devel state=latest
+# 現在のカーネル用を取得する
+- yum: name="kernel-devel-{{ ansible_kernel }}"
+
+- yum: name=gcc
+- yum: name=dkms
+
+- get_url: url={{ vboxguest_release_url }}
+           dest="/usr/local/src/{{ vboxguest_release }}.iso"
+- file: path={{ vboxguest_mount }} state=directory
+- shell: mount -o loop,ro "/usr/local/src/{{ vboxguest_release }}.iso" {{ vboxguest_mount }}
+- shell: "{{ vboxguest_mount }}/VBoxLinuxAdditions.run"
+  register: ret
+  changed_when: "'All good' in ret.stdout"
+  failed_when: "not ret.changed"
+- shell: umount {{ vboxguest_mount }}
+- file: path={{ vboxguest_mount }} state=absent

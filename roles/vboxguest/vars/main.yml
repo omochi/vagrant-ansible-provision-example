@@ -1,0 +1,4 @@
+---
+vboxguest_release: "VBoxGuestAdditions_4.3.20"
+vboxguest_release_url: "http://download.virtualbox.org/virtualbox/4.3.20/{{ vboxguest_release }}.iso"
+vboxguest_mount: /media/vboxguest

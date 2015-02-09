@@ -4,7 +4,7 @@ vagrant + ansible + CentOS7.0 + VirtualBox 環境で、
 仮想マシンの初期設定を行うサンプルです。
 
 全てのソフトウェアをアップデートすること、
-VirtualBoxのGuestAdditionを適切な状態にする事が主目的です。
+VirtualBox Guest Additionsを適切な状態にする事が主目的です。
 
 # 実行環境の構築
 
@@ -81,7 +81,7 @@ provision1を下記に示します。
     - selinux-disable
     - epel
     - yum-update
-    - vboxadd-setup
+    - { role: vboxguest,   tags: ['vboxguest'] }
 ~~~
 
 初めにselinuxを無効化します。
@@ -93,50 +93,63 @@ provision1を下記に示します。
 次に全ての既存ソフトウェアのアップデートを行います。
 この過程で、**カーネルの更新の発生を想定しています。**
 
-最後にVirtualBox Additionsのリビルドを行います。
+最後にVirtualBox Guest Additions(以下vboxguest)のリビルドを行います。
 このロールについて説明します。
 
-## vboxaddのビルド
+## vboxguestのビルド
 
-さて、vboxaddをビルドする際は、カーネルのバージョンと対応してビルドされます。
+vboxguestはカーネルのバージョンと対応づけてビルドされます。
 
 カーネルアップデートが生じた場合、
-OSの次回起動時に新しいカーネルで起動しますが、
-この際、新しいカーネルと古いカーネル用のvboxaddが正しく連動しない場合があります。
-そうなると、vagrantからの仮想マシンの起動時にエラーが出てしまいます。
+OSは次回起動時に新しいカーネルで起動しますが、
+この際、新しいカーネルと古いカーネル用のvboxguestが正しく連動しない場合があります。
+するとvagrantからの仮想マシンの起動時にエラーが出てしまいます。
 
-dkmsはこのカーネルの切替に合わせてモジュールを切り替える機能を提供してくれます。
-vboxaddもそれに対応しているので、リビルドする前にdkmsをインストールします。
+dkmsはこのようなケースで、
+カーネルの切替に合わせてモジュールを切り替える機能を提供してくれます。
+vboxguestはビルド環境でdkmsを検出するとdkms対応でビルドしてくれるので、
+これを使用するためにビルドする前にdkmsをインストールします。
 dkmsのインストールはepelから行うため、事前に別のロールでepelをインストールしています。
 
 では下記にコードを示します。
 
 ~~~
 # 最新のカーネル用を取得する
-- yum: name=kernel-devel
-- yum: name=gcc
-- yum: name=dkms
-
+- yum: name=kernel-devel state=latest
 # 現在のカーネル用を取得する
 - yum: name="kernel-devel-{{ ansible_kernel }}"
 
-- command: /etc/init.d/vboxadd setup
+- yum: name=gcc
+- yum: name=dkms
+
+# 略
 ~~~
 
-初めのkernel-develは、次回起動時用の最新カーネル用にモジュールをビルドするためにインストールしています。
+kernel-develはvboxguestのビルドに必要です。
+また、kernel-devel自体のパッケージバージョンがカーネルバージョンと対応しており、
+ビルドするターゲットのカーネルバージョンに合わせたものが必要です。
 
-後ろのkernel-develは、現在起動しているカーネル用にビルドするためのものです。
-vboxaddのビルドでは、現在のカーネル用もビルドするためこれが必要になります。
+初めのkernel-develは、次回起動時に使用される最新カーネル用にビルドするためのものです。
+次のkernel-develは、現在起動しているカーネル用にビルドするためのものです。
+vboxguestのビルドでは、現在のカーネル用もビルドするためこれを入れておく必要があります。
 
 それと、ビルド用のgccとdkmsをインストールしています。
 
-最後にvboxaddをリビルドするコマンドが書かれています。
+最後にvboxguestをリビルドするコマンドが書かれています。
+ここでは、isoをダウンロードしてきてマウントし、中にあるスクリプトを実行しています。
+vboxguestのバージョンは、ホスト環境のVirtualBoxのバージョンと揃えるのが望ましいです。
 
-なお、[vboxaddについての公式文書はこちらです。](https://www.virtualbox.org/manual/ch04.html#idp54932560)
+バージョンを変更する際は、[varsファイル](roles/vboxguest/vars/main.yml)を編集します。
+VirtualBoxの更新時は[こちら](http://download.virtualbox.org/virtualbox/)からisoを選択します。
+
+### 参考資料
+
+- [vboxguestについての公式マニュアル](https://www.virtualbox.org/manual/ch04.html#idp54932560)
+- [vagrantのvboxguestインストールのガイド](https://docs.vagrantup.com/v2/virtualbox/boxes.html)
 
 ## provision2
 
-再起動した後、もう一度vboxaddをリビルドしています。
+再起動した後、もう一度vboxguestをリビルドしています。
 
 dkmsでインストールしたモジュールを確認すると、
 installedとinstalled-weakという状態があります。
@@ -162,14 +175,8 @@ provision2ではそれを更新するために再度リビルドしています�
 # 終わり
 
 このVagrantfileを使用することで、
-カーネル、ソフトウェア、vboxaddが正しくセットアップされた仮想マシンが起動します。
+カーネル、ソフトウェア、vboxguestが正しくセットアップされた仮想マシンが起動します。
 
-この後、マシン個別のセットアップをansibleで行うと良いと思います。
+この後マシン個別のセットアップをansibleで行うと良いと思います。
 
-# 課題
-
-このレシピでは、既存のboxに入っているvboxaddのリビルドをしているだけなので、
-VirtualBoxホストのアップデート時に、vboxadd自体のアップデートが行えません。
-
-vboxaddのディスクをダウンロードしてくる形への改良を予定しています。
 

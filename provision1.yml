@@ -5,4 +5,4 @@
     - selinux-disable
     - epel
     - yum-update
-    - vboxadd-setup
+    - { role: vboxguest,   tags: ['vboxguest'] }

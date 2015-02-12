@@ -1,0 +1,7 @@
+---
+- hosts: all
+  sudo: yes
+  roles:
+    - { role: epel,            tags: ['epel'] }
+    - { role: yum-update,      tags: ['yum-update'] }
+    - { role: vboxguest,       tags: ['vboxguest'] }
